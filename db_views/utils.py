@@ -13,17 +13,17 @@ def drop_view(view_name, using='default'):
             except ProgrammingError:
                 pass
 
-def create_view_from_qs_base(qs, view_name, sql_permissions=None, materialized=True, ufields=None, using='default'):
-    """Utility function to create a DB view from a django queryset.
-    Args:
-        qs (django.db.QuerySet): The queryset to be translated into a view
-        view_name (str): View name to be created/updated
-        sql_permissions (str, optional): SQL to be executed after the view is created, 
-            intended for setting permissions but could be any raw SQL. 
-            i.e. ALTER TABLE public.{view_name} OWNER TO postgres;
-        materialized (bool): If True will create a materialized view. default True
-        ufields (list): List of field names to create a unique index on 
-    """    
+
+def create_view_from_qs(
+    qs, 
+    view_name, 
+    materialized=True, 
+    ufields=None, 
+    db_owner='postgres',
+    read_only_db_users=None,
+    using = 'default'
+):
+    """ Utility function to create a DB view using the passed qs and view_name """
     connection = connections[using]
     qstr, params = qs.query.sql_with_params()
     vstr = 'MATERIALIZED VIEW' if materialized else 'VIEW'
@@ -42,29 +42,13 @@ def create_view_from_qs_base(qs, view_name, sql_permissions=None, materialized=T
             cursor.execute(index_drop)
             cursor.execute(index_qstr)
 
-    if sql_permissions:
-        with connection.cursor() as cursor:
-            cursor.execute(sql_permissions)
-
-def create_view_from_qs(
-    qs, 
-    view_name, 
-    use_default_permissions=True, 
-    materialized=True, 
-    ufields=None, 
-    db_owner='postgres',
-    read_only_users=None,
-    using = 'default'
-):
-    """ Utility function to create a DB view using the passed qs and view_name """
-    connection = connections[using]
-    if read_only_users == None: read_only_users = []
-    sql_permisions = f'''
-        ALTER TABLE public.{view_name} OWNER TO postgres;
-        GRANT ALL ON TABLE public.{view_name} TO postgres;
+    # Handle Permissions stuff
+    if read_only_db_users == None: read_only_db_users = []
+    sql_sql_permissions = f'''
+        ALTER TABLE public.{view_name} OWNER TO {db_owner};
+        GRANT ALL ON TABLE public.{view_name} TO {db_owner};
     '''
-    if use_default_permissions:
-        sql_permisions += f''' GRANT SELECT ON TABLE public.{view_name} TO accdc_readonly;'''
-    for ruser in read_only_users:
-        sql_permisions += f''' GRANT SELECT ON TABLE public.{view_name} TO {ruser};'''
-    create_view_from_qs_base(qs, view_name=view_name, sql_permissions=sql_permisions, materialized=materialized, ufields=ufields)
+    for ruser in read_only_db_users:
+        sql_sql_permissions += f''' GRANT SELECT ON TABLE public.{view_name} TO {ruser};'''
+    with connection.cursor() as cursor:
+        cursor.execute(sql_sql_permissions)
