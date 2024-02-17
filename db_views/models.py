@@ -1,21 +1,20 @@
-from django.db.models import Model, CharField
-
+from django.db.models import *
+from django.conf import settings
 
 class DbView(models.Model):
     ''' Represents a database view created from a django query '''
     STORE_ORIG = True
     
     view_name = CharField(max_length=255, unique=True)
-    content_type = ForeignKey(ContentType, on_delete=CASCADE) # The ContentType of the model that generates the QS
-    get_qs_method_name = CharField(max_length=255) # Name of the method on the model that gets the queryset
-    fields = ArrayField(CharField(max_length=255,null=True), size=100, null=True, blank=True)
-    ufields = ArrayField(CharField(max_length=255,null=True), size=100, null=True, blank=True, verbose_name="Unique Fields")
-    owners = ManyToManyField('common.Employee', blank=True)
-    materialized = BooleanField(default=True)
+    content_type = ForeignKey(ContentType, on_delete=CASCADE) # The ContentType of the model that generates the qs
+    get_qs_method_name = CharField(max_length=255) # Name of the method on the content_type that generates the qs
+    fields = JSONField(null=True, blank=True)
+    ufields = JSONField(null=True, blank=True, verbose_name="Unique Fields")
+    owners = ManyToManyField(settings.AUTH_USER_MODEL, blank=True) # Project users that "own" the view
+    materialized = BooleanField(default=True) 
     desc = TextField(null=True, blank=True)
-    dtg_last_refresh = DateTimeField(null=True, blank=True)
+    dtg_last_refresh = DateTimeField(null=True, blank=True) # only applies to materialized views
     dtg_view_created = DateTimeField(null=True, blank=True)
-    history = HistoricalRecords(related_name='log')
 
     class Meta:
         ordering = ('-dtg_last_refresh', '-dtg_view_created')
