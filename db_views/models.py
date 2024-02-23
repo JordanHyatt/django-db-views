@@ -6,7 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import connections
 from django.db.utils import OperationalError, ProgrammingError
 
-from utils import *
+from db_views.utils import *
 
 logger = logging.getLogger()
 
@@ -36,6 +36,11 @@ class DbView(Model):
     def view_name_changed(self):
         old_view_name = getattr(self, 'orig', {}).get('view_name') or self.view_name
         return old_view_name != self.view_name
+
+    @property
+    def materialized_changed(self):
+        old_materialized = getattr(self, 'orig', {}).get('materialized') or self.materialized
+        return old_materialized != self.materialized
 
     @property
     def model_class(self):
@@ -115,11 +120,10 @@ class DbView(Model):
                     pass
 
     def drop_old_view_if_changed(self):
-        if not self.view_name_changed:
-            return
-        orig_view_name = getattr(self, 'orig', {}).get('view_name')
-        if orig_view_name:
-            self.drop_view(view_name=orig_view_name)
+        if self.view_name_changed or self.materialized_changed:
+            orig_view_name = getattr(self, 'orig', {}).get('view_name')
+            if orig_view_name:
+                self.drop_view(view_name=orig_view_name)
 
     def get_fields(self):
         qs = self.qs
