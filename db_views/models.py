@@ -1,32 +1,50 @@
 import logging
-from django.db.models import *
+from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 from django.db import connections
 from django.db.utils import OperationalError, ProgrammingError
+from django.contrib.postgres.fields import ArrayField
 
 from db_views.utils import *
 
 logger = logging.getLogger()
 
-class DbView(Model):
+
+def get_db_owner_default():
+    from django.conf import settings
+    return settings.DATABASES.get('default', {}).get('USER', 'postgres')
+
+
+class DbView(models.Model):
     ''' Represents a database view created from a django query '''
 
-    view_name = CharField(max_length=255, unique=True)
-    db_alias = CharField(max_length=255, default='default')
-    content_type = ForeignKey(ContentType, on_delete=CASCADE) # The ContentType of the model that generates the qs
-    get_qs_method_name = CharField(max_length=255) # Name of the method on the content_type that generates the qs
-    fields = JSONField(null=True, blank=True)
-    ufields = JSONField(null=True, blank=True, verbose_name="Unique Fields")
-    owners = ManyToManyField(settings.AUTH_USER_MODEL, blank=True) # Project users that "own" the view
-    materialized = BooleanField(default=True) 
-    desc = TextField(null=True, blank=True)
-    dtg_last_refresh = DateTimeField(null=True, blank=True) # only applies to materialized views
-    dtg_view_created = DateTimeField(null=True, blank=True)
+    view_name = models.CharField(max_length=255, unique=True)
+    db_alias = models.CharField(max_length=255, default='default')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE) # The ContentType of the model that generates the qs
+    get_qs_method_name = models.CharField(max_length=255) # Name of the method on the content_type that generates the qs
+    fields = models.JSONField(null=True, blank=True)
+    ufields = models.JSONField(null=True, blank=True, verbose_name="Unique Fields")
+    owners = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True) # Django users that "own" the view
+    materialized = models.BooleanField(default=True) 
+    desc = models.TextField(null=True, blank=True)
+    dtg_last_refresh = models.DateTimeField(null=True, blank=True) # only applies to materialized views
+    dtg_view_created = models.DateTimeField(null=True, blank=True)
+
+    # Database Fields 
+    db_owner = models.CharField(max_length=50, default=get_db_owner_default) # Database owner of the view. Defaults to DATABASES['default']['USER']
+    db_read_only_users = ArrayField(models.CharField(max_length=50, blank=True))
 
     class Meta:
         ordering = ('-dtg_last_refresh', '-dtg_view_created')
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        instance._loaded_values = dict(
+            zip(field_names, (value for value in values if value is not models.DEFERRED))
+        )
 
     @property
     def db_connection(self):
@@ -34,13 +52,16 @@ class DbView(Model):
 
     @property
     def view_name_changed(self):
-        old_view_name = getattr(self, 'orig', {}).get('view_name') or self.view_name
-        return old_view_name != self.view_name
+        return self.get_attr_changed(attr_name='view_name')
 
     @property
     def materialized_changed(self):
-        old_materialized = getattr(self, 'orig', {}).get('materialized') or self.materialized
-        return old_materialized != self.materialized
+        return self.get_attr_changed(attr_name='materialized')
+
+    def get_attr_changed(self, attr_name):
+        orig = getattr(self, '_loaded_values', {}).get(attr_name)
+        return orig != getattr(self, attr_name)
+
 
     @property
     def model_class(self):
