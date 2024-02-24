@@ -29,7 +29,7 @@ def create_view_from_qs(
         if index_qstr:
             cursor.execute(index_drop)
             cursor.execute(index_qstr)
-    grant_permissions(
+    grant_privleges(
         view_name=view_name, db_owner=db_owner, 
         db_read_only_users=db_read_only_users, using=using
     )
@@ -54,7 +54,7 @@ def refresh_mat_view(view_name, using='default', concurrently=True):
         cur.execute(qstr)
 
 
-def grant_permissions(view_name, db_owner, db_read_only_users, using='default'):
+def grant_privleges(view_name, db_owner, db_read_only_users, using='default'):
     connection = connections[using]
     sql_sql_permissions = f'''
         ALTER TABLE {view_name} OWNER TO {db_owner};

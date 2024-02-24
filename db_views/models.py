@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import connections
 from django.db.utils import OperationalError, ProgrammingError
 from django.contrib.postgres.fields import ArrayField
+from django.db import transaction
 
 from db_views.utils import *
 
@@ -112,7 +113,7 @@ class DbView(models.Model):
         self.dtg_last_refresh = timezone.now()
         self.save()
 
-    def create_view(self):
+    def create_view(self, save_instance=False):
         if self.qs is None:
             logger.warning(f"Queryset is None cannot create view {self.view_name}")
         create_view_from_qs(
@@ -122,7 +123,8 @@ class DbView(models.Model):
         )
         self.dtg_last_refresh = timezone.now()
         self.dtg_view_created = timezone.now()
-        self.save()
+        if save_instance:
+            self.save()
 
     def drop_view(self, view_name=None):
         view_name = view_name or self.view_name
@@ -142,6 +144,14 @@ class DbView(models.Model):
         for username in revoke_list:
             revoke_select_privlege(view_name=self.view_name, username=username, using=self.db_alias)
 
+    def grant_privleges(self):
+        if not self.view_exists:
+            return
+        grant_privleges(
+            view_name=self.view_name, db_owner=self.db_owner, 
+            db_read_only_users=self.db_read_only_users, using=self.db_alias,
+        )
+
     def get_fields(self):
         qs = self.qs
         m1 = qs is None
@@ -155,12 +165,17 @@ class DbView(models.Model):
             return
         self.get_qs_method_name = f'get_{self.view_name}_qs'
 
-    def save(self, *args, **kwargs):
+
+    def save(self, *args, call_create_view=True, **kwargs):
         self.get_get_qs_method_name()
         self.get_fields()
-        self.revoke_privleges()
         super().save(*args, **kwargs)
-        self.drop_old_view_if_changed()
+        if call_create_view:
+            transaction.on_commit(self.create_view)
+        else:
+            transaction.on_commit(self.revoke_privleges)
+            transaction.on_commit(self.grant_privleges)
+        transaction.on_commit(self.drop_old_view_if_changed)
 
 
     def delete(self, *args, **kwargs):
