@@ -29,16 +29,10 @@ def create_view_from_qs(
         if index_qstr:
             cursor.execute(index_drop)
             cursor.execute(index_qstr)
-
-    # Handle Permissions stuff
-    sql_sql_permissions = f'''
-        ALTER TABLE public.{view_name} OWNER TO {db_owner};
-        GRANT ALL ON TABLE public.{view_name} TO {db_owner};
-    '''
-    for ruser in db_read_only_users:
-        sql_sql_permissions += f''' GRANT SELECT ON TABLE public.{view_name} TO {ruser};'''
-    with connection.cursor() as cursor:
-        cursor.execute(sql_sql_permissions)
+    grant_permissions(
+        view_name=view_name, db_owner=db_owner, 
+        db_read_only_users=db_read_only_users, using=using
+    )
 
 def drop_view(view_name, using='default'):
     connection = connections[using]
@@ -54,6 +48,48 @@ def drop_view(view_name, using='default'):
 
 def refresh_mat_view(view_name, using='default', concurrently=True):
     connection = connections[using]
-    qstr = f'REFRESH MATERIALIZED VIEW CONCURRENTLY {view_name};'
+    concur = 'CONCURRENTLY' if concurrently else ''
+    qstr = f'REFRESH MATERIALIZED VIEW {concur} {view_name};'
     with connection.cursor() as cur:
         cur.execute(qstr)
+
+
+def grant_permissions(view_name, db_owner, db_read_only_users, using='default'):
+    connection = connections[using]
+    sql_sql_permissions = f'''
+        ALTER TABLE {view_name} OWNER TO {db_owner};
+        GRANT ALL ON TABLE {view_name} TO {db_owner};
+    '''
+    for user in db_read_only_users:
+        create_db_read_only_user(username=user, using=using)
+        sql_sql_permissions += f''' GRANT SELECT ON TABLE {view_name} TO {user};'''
+    with connection.cursor() as cursor:
+        cursor.execute(sql_sql_permissions)
+
+
+def revoke_select_privlege(view_name, username, using='default'):
+    connection = connections[using]
+    qstr = (
+        f''' REVOKE ALL ON {view_name} FROM {username} '''
+    )   
+    with connection.cursor() as cur:
+        cur.execute(qstr)
+
+def create_db_read_only_user(username, using='default'):
+    connection = connections[using]
+    qstr = (
+        f'''CREATE ROLE {username} WITH
+            NOLOGIN
+            NOSUPERUSER
+            INHERIT
+            NOCREATEDB
+            NOCREATEROLE
+            NOREPLICATION;
+        '''
+    )
+    with connection.cursor() as cur:
+        try:
+            cur.execute(qstr)
+        except ProgrammingError as pe:
+            if 'already exists' not in str(pe):
+                raise pe

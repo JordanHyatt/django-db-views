@@ -83,6 +83,8 @@ class DbView(models.Model):
 
     @property
     def filter_logic(self):
+        if not self.qs:
+            return ''
         return str(self.qs.query.where).replace('<', '').replace('>', '')
 
     @property
@@ -92,7 +94,6 @@ class DbView(models.Model):
 
     @property
     def view_exists(self):
-        from django.db import connection
         if self.materialized:
             sql = f"select exists(select matviewname from pg_matviews where matviewname='{self.view_name}')"
         else:
@@ -111,13 +112,13 @@ class DbView(models.Model):
         self.dtg_last_refresh = timezone.now()
         self.save()
 
-
     def create_view(self):
         if self.qs is None:
             logger.warning(f"Queryset is None cannot create view {self.view_name}")
         create_view_from_qs(
-            self.qs, view_name=self.view_name, ufields=self.ufields, using=self.db_alias,
-            materialized=self.materialized, db_owner=self.db_owner, 
+            self.qs, view_name=self.view_name, ufields=self.ufields, 
+            using=self.db_alias, materialized=self.materialized, 
+            db_owner=self.db_owner, db_read_only_users=self.db_read_only_users
         )
         self.dtg_last_refresh = timezone.now()
         self.dtg_view_created = timezone.now()
@@ -125,21 +126,21 @@ class DbView(models.Model):
 
     def drop_view(self, view_name=None):
         view_name = view_name or self.view_name
-        drop_qstr1 = f''' DROP VIEW IF EXISTS "{view_name}" '''
-        drop_qstr2 = f''' DROP MATERIALIZED VIEW IF EXISTS "{view_name}" '''
-        with self.db_connection.cursor() as cursor:
-            # Drop existing views with the name view_name
-            for dstr in [drop_qstr1, drop_qstr2]:
-                try:
-                    cursor.execute(dstr)
-                except ProgrammingError:
-                    pass
+        drop_view(view_name=view_name, using=self.db_alias)
 
     def drop_old_view_if_changed(self):
         if self.view_name_changed or self.materialized_changed:
-            orig_view_name = getattr(self, 'orig', {}).get('view_name')
+            orig_view_name = getattr(self, '_loaded_values', {}).get('view_name')
             if orig_view_name:
                 self.drop_view(view_name=orig_view_name)
+
+    def revoke_privleges(self):
+        if not self.view_exists:
+            return
+        orig = set(getattr(self, '_loaded_values', {}).get('db_read_only_users', set()))
+        revoke_list = orig.difference(self.db_read_only_users)
+        for username in revoke_list:
+            revoke_select_privlege(view_name=self.view_name, username=username, using=self.db_alias)
 
     def get_fields(self):
         qs = self.qs
@@ -154,14 +155,14 @@ class DbView(models.Model):
             return
         self.get_qs_method_name = f'get_{self.view_name}_qs'
 
-    def run_save_methods(self):
-        self._created = not bool(self.pk)
+    def save(self, *args, **kwargs):
         self.get_get_qs_method_name()
         self.get_fields()
-        
-    def run_after_pk_methods(self):
+        self.revoke_privleges()
+        super().save(*args, **kwargs)
         self.drop_old_view_if_changed()
-        
+
+
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
         self.drop_view()

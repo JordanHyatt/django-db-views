@@ -29,15 +29,19 @@ host = os.getenv('DB_HOST', 'localhost')
 password = os.getenv('DB_PASSWORD', 'postgres')
 port = os.getenv('DB_PORT', '5432')
 
+default = {
+    'ENGINE':'django.db.backends.postgresql',
+    'NAME': name,
+    'USER': user,
+    'PASSWORD': password,
+    'HOST': host,
+    'PORT': port,
+}
+other = default.copy()
+other['NAME'] = other.get('NAME') + '_other'
 DATABASES = {
-    'default': {
-        'ENGINE':'django.db.backends.postgresql',
-        'NAME': name,
-        'USER': user,
-        'PASSWORD': password,
-        'HOST': host,
-        'PORT': port,
-    },
+    'default': default,
+    'other': other,
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
