@@ -45,6 +45,7 @@ class DbView(models.Model):
         instance._loaded_values = dict(
             zip(field_names, (value for value in values if value is not models.DEFERRED))
         )
+        return instance
 
     @property
     def db_connection(self):
