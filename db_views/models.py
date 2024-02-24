@@ -34,7 +34,7 @@ class DbView(models.Model):
 
     # Database Fields 
     db_owner = models.CharField(max_length=50, default=get_db_owner_default) # Database owner of the view. Defaults to DATABASES['default']['USER']
-    db_read_only_users = ArrayField(models.CharField(max_length=50, blank=True))
+    db_read_only_users = ArrayField(models.CharField(max_length=50, blank=True), default=list)
 
     class Meta:
         ordering = ('-dtg_last_refresh', '-dtg_view_created')
@@ -62,7 +62,6 @@ class DbView(models.Model):
     def get_attr_changed(self, attr_name):
         orig = getattr(self, '_loaded_values', {}).get(attr_name)
         return orig != getattr(self, attr_name)
-
 
     @property
     def model_class(self):
@@ -108,13 +107,7 @@ class DbView(models.Model):
         if not self.view_exists:
             logger.warning(f'View {self.view_name} does not exist and cannot be refreshed')
         logger.info(f'Refreshing View: {self.view_name}')
-        qstr = f'REFRESH MATERIALIZED VIEW CONCURRENTLY {self.view_name};'
-        with self.db_connection.cursor() as cur:
-            try:
-                cur.execute(qstr)
-            except OperationalError:
-                logger.warning(f'---- {self.view_name} does not have an unique index -----')
-                return
+        refresh_mat_view(view_name=self.view_name, using=self.db_alias)
         self.dtg_last_refresh = timezone.now()
         self.save()
 
@@ -123,7 +116,8 @@ class DbView(models.Model):
         if self.qs is None:
             logger.warning(f"Queryset is None cannot create view {self.view_name}")
         create_view_from_qs(
-            self.qs, view_name=self.view_name, ufields=self.ufields, materialized=self.materialized, 
+            self.qs, view_name=self.view_name, ufields=self.ufields, using=self.db_alias,
+            materialized=self.materialized, db_owner=self.db_owner, 
         )
         self.dtg_last_refresh = timezone.now()
         self.dtg_view_created = timezone.now()
