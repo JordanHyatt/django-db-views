@@ -8,7 +8,7 @@ django-db-views
 An app for creating and maintaining DB views based on ORM QuerySets
 -------------------------------------------------------------------
 
-This application is expecially useful for when you want to tie analytics tools such as tableau, etc directly into your backend.  You can create the views required directly from the django ORM.
+This application is especially useful for when you want to tie analytics tools such as tableau, etc directly into your backend without having to do all the SQL.  You can create the views required directly from the django ORM.
 
 django-db-views is a reusable, installable app for use with a Django project. **Please note** that using this package will result in the direct manipulation of your Django project's database. 
 
@@ -53,9 +53,9 @@ Say your project has the following models::
                 org_name = F('org__name')
             ).values()
 
-You would like to create a DB view from the Person model that joins Org info.  Simply create a @classmethod that generates the queryset.  In this case the method is called `` get_person_view_qs ``
+You would like to create a DB view from the Person model that joins Org info.  Simply create a @classmethod that generates the queryset.  In the example above the method is called `` get_person_view_qs ``
 
-Then use the ORM (or create UI) to create a DbView instance::
+To generate the view use the ORM (or create UI) to create a DbView instance and call the ``create_view`` method::
 
     content_type = ContentType.objects.get_for_model(Person)
     dbv = DbView.objects.create(
@@ -65,7 +65,7 @@ Then use the ORM (or create UI) to create a DbView instance::
     )
     dbv.create_view()
 
-At this point the default DB will have a view in called "person_view" that matches the result of the queryset returned from ``get_person_view_qs``.  If you delete the DbView object the view will be dropped from the database.  
+At this point the default DB will have a view in called "person_view" that matches the result of the queryset returned from ``get_person_view_qs``.  If you delete the DbView instance the view will be dropped from the database.  
 
 
 Contributing:
