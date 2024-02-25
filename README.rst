@@ -19,8 +19,19 @@ Set up:
 
     python manage.py migrate
 
+Model/API:
+^^^^^^^^^^^
+
+You'll probably want to know how to use this so we will add some background here.
+In the meantime the source code itself is fairly explanative.
+Clear, readable code and comments are used throughout.
+
 Contributing:
 ^^^^^^^^^^^^^^
+
+Developers will need to install packages from *requirements.txt*.
+Linux users: You'll need to use psycopg2's binaries as pip doesn't seem able to install psycopg2 from source.
+After running **pip install -r requirements.txt**, linux users must also run **pip install psycopg2-binary**
 
 A test suite is provided for vetting commits prior to integration with the project.
 The test suite will require several environment variables and a postgres test database in order to function properly.
