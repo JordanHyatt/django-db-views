@@ -84,7 +84,7 @@ class TestDbView(TestCase):
         self.assertAlmostEqual(timezone.now(), dbv.dtg_last_refresh, delta=timedelta(seconds=0.05))
 
 
-    def test_old_view_if_changed(self):
+    def test_drop_old_view_if_changed(self):
         pass # TODO write this test
         
     def test_revoke_privleges(self):
