@@ -38,11 +38,9 @@ default = {
     'HOST': host,
     'PORT': port,
 }
-other = default.copy()
-other['NAME'] = other.get('NAME') + '_other'
 DATABASES = {
     'default': default,
-    'other': other,
+    'other': default,
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
