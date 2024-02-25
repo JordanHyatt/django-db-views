@@ -19,7 +19,7 @@ Installation:
 
     pip install django-db-views
 
-2. Add *db_views* to your project setting's INSTALLED_APPS.  You must also have contenttypes framework installed ::
+2. Add *db_views* to your project setting's INSTALLED_APPS.  You must also have contenttypes framework installed :: 
 
         INSTALLED_APPS = [
             ...
@@ -34,7 +34,9 @@ Installation:
 
 Example Usage:
 ^^^^^^^^^^^^^^
-Say your project has the following models::
+Say your project has the following models.
+
+.. code-block :: python 
 
     class Organization(models.Model):
         name = models.CharField(max_length=250)
