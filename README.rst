@@ -7,8 +7,8 @@ An app for creating and maintaining DB views based on ORM QuerySets
 
 django-db-views is a reusable, installable app for use with a Django project. **Please note** that using this package will result in the direct manipulation of your Django project's database. 
 
-Set up:
-^^^^^^^^^^^^^^
+Installation:
+^^^^^^^^^^^^^
 
 1. Install django-db-views ::
 
@@ -20,14 +20,14 @@ Set up:
     python manage.py migrate
 
 Model/API:
-^^^^^^^^^^^
+^^^^^^^^^^
 
 You'll probably want to know how to use this so we will add some background here.
 In the meantime the source code itself is fairly explanative.
 Clear, readable code and comments are used throughout.
 
 Contributing:
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 Developers will need to install packages from *requirements.txt*.
 Linux users: You'll need to use psycopg2's binaries as pip doesn't seem able to install psycopg2 from source.
