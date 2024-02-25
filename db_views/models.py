@@ -50,6 +50,17 @@ class DbView(models.Model):
         return instance
 
     @property
+    def qs(self):
+        if self.get_qs_method_exists:
+            return getattr(self.content_type.model_class(), self.get_qs_method_name).__call__()
+        return None
+
+    @property
+    def get_qs_method_exists(self):
+        """ Property returns True if the get_qs_method exists on the model_class """
+        return hasattr(self.content_type.model_class(), self.get_qs_method_name)
+
+    @property
     def db_connection(self):
         return connections[self.db_alias]
 
@@ -66,35 +77,6 @@ class DbView(models.Model):
         return orig != getattr(self, attr_name)
 
     @property
-    def model_class(self):
-        return self.content_type.model_class()
-
-    @property
-    def model_name(self):
-        return self.model_class.__name__
-
-    @property
-    def qs_model_name(self):
-        return self.qs.model.__name__
-
-    @property
-    def qs(self):
-        if self.get_qs_method_exists:
-            return getattr(self.model_class, self.get_qs_method_name).__call__()
-        return None
-
-    @property
-    def filter_logic(self):
-        if not self.qs:
-            return ''
-        return str(self.qs.query.where).replace('<', '').replace('>', '')
-
-    @property
-    def get_qs_method_exists(self):
-        """ Property returns True if the get_qs_method exists on the model_class """
-        return hasattr(self.model_class, self.get_qs_method_name)
-
-    @property
     def view_exists(self):
         if self.materialized:
             sql = f"select exists(select matviewname from pg_matviews where matviewname='{self.view_name}')"
@@ -107,8 +89,10 @@ class DbView(models.Model):
     def refresh_mat_view(self):
         if not self.materialized:
             logger.warning(f'View refresh can only be called on materialized views')
+            return
         if not self.view_exists:
             logger.warning(f'View {self.view_name} does not exist and cannot be refreshed')
+            return
         logger.info(f'Refreshing View: {self.view_name}')
         refresh_mat_view(view_name=self.view_name, using=self.db_alias)
         self.dtg_last_refresh = timezone.now()
