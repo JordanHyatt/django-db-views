@@ -46,7 +46,7 @@ def drop_view(view_name, using='default'):
             except ProgrammingError:
                 pass
 
-def refresh_mat_view(view_name, using='default', concurrently=True):
+def refresh_mat_view(view_name, concurrently=True, using='default'):
     connection = connections[using]
     concur = 'CONCURRENTLY' if concurrently else ''
     qstr = f'REFRESH MATERIALIZED VIEW {concur} {view_name};'
