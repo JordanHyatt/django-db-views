@@ -7,9 +7,10 @@ An app for creating and maintaining DB views based on ORM QuerySets
 
 
 
-Testing:
+Contributing:
 ^^^^^^^^^^^^
 
+A test suite is provided for vetting commits prior to integration with the project.
 The test suite will require several environment variables and a postgres test database in order to function properly.
 
 Set up tests:
@@ -31,7 +32,7 @@ Running tests:
 """""""""""""""
 Run the following command to initiate the test runner and run the test suite:
 
-.. code-block:: 
+:: 
 
     python runtests.py
 
