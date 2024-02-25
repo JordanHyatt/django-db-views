@@ -23,7 +23,7 @@ INSTALLED_APPS = [
 
 USE_TZ=True
 
-# Postegres settings used for testing
+# Postgres settings used for testing
 name = os.getenv('DB_NAME', 'dbviews')
 user = os.getenv('DB_USER', 'postgres')
 host = os.getenv('DB_HOST', 'localhost')
