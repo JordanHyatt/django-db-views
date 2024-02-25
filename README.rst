@@ -5,10 +5,22 @@ django-db-views
 An app for creating and maintaining DB views based on ORM QuerySets
 -------------------------------------------------------------------
 
+django-db-views is a reusable, installable app for use with a Django project. **Please note** that using this package will result in the direct manipulation of your Django project's database. 
 
+Set up:
+^^^^^^^^^^^^^^
+
+1. Install django-db-views ::
+
+    pip install django-db-views
+
+2. Add *db_views* to your project setting's INSTALLED_APPS
+3. Migrate your database ::
+
+    python manage.py migrate
 
 Contributing:
-^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 A test suite is provided for vetting commits prior to integration with the project.
 The test suite will require several environment variables and a postgres test database in order to function properly.
