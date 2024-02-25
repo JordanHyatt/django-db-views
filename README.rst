@@ -57,8 +57,10 @@ Say your project has the following models.
 
 You would like to create a DB view from the Person model that joins Org info.  Simply create a @classmethod that generates the queryset.  In the example above the method is called `` get_person_view_qs ``
 
-To generate the view use the ORM (or create UI) to create a DbView instance and call the ``create_view`` method::
+To generate the view use the ORM (or create UI) to create a DbView instance and call the ``create_view`` method
 
+.. code-block :: python
+    
     content_type = ContentType.objects.get_for_model(Person)
     dbv = DbView.objects.create(
         view_name='person_view',  content_type=content_type,
