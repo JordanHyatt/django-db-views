@@ -78,13 +78,9 @@ class DbView(models.Model):
 
     @property
     def view_exists(self):
-        if self.materialized:
-            sql = f"select exists(select matviewname from pg_matviews where matviewname='{self.view_name}')"
-        else:
-            sql = f"select exists(select viewname from pg_views where viewname='{self.view_name}')"
-        with self.db_connection.cursor() as cur:
-            cur.execute(sql)
-            return cur.fetchone()[0]
+        return view_exists(
+            view_name=self.view_name, materialized=self.materialized, using=self.db_alias
+        )
 
     def refresh_mat_view(self):
         if not self.materialized:
@@ -98,7 +94,7 @@ class DbView(models.Model):
         self.dtg_last_refresh = timezone.now()
         self.save()
 
-    def create_view(self, save_instance=False):
+    def create_view(self, save_instance=True):
         if self.qs is None:
             logger.warning(f"Queryset is None cannot create view {self.view_name}")
         create_view_from_qs(
@@ -127,8 +123,7 @@ class DbView(models.Model):
             return
         orig = set(getattr(self, '_loaded_values', {}).get('db_read_only_users', set()))
         revoke_list = orig.difference(self.db_read_only_users)
-        for username in revoke_list:
-            revoke_select_privlege(view_name=self.view_name, username=username, using=self.db_alias)
+        revoke_privleges(view_name=self.view_name, revoke_list=revoke_list, using=self.db_alias)
 
     def grant_privleges(self):
         if not self.view_exists:

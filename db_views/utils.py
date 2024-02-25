@@ -67,6 +67,12 @@ def grant_privleges(view_name, db_owner, db_read_only_users, using='default'):
         cursor.execute(sql_sql_permissions)
 
 
+def revoke_privleges(view_name, revoke_list=None, using='default'):
+    revoke_list = revoke_list or []
+    for username in revoke_list:
+        revoke_select_privlege(view_name=view_name, username=username, using=using)
+    
+
 def revoke_select_privlege(view_name, username, using='default'):
     connection = connections[using]
     qstr = (
@@ -74,6 +80,18 @@ def revoke_select_privlege(view_name, username, using='default'):
     )   
     with connection.cursor() as cur:
         cur.execute(qstr)
+
+
+def view_exists(view_name, materialized, using='default'):
+    connection = connections[using]
+    if materialized:
+        qstr = f"select exists(select matviewname from pg_matviews where matviewname='{view_name}')"
+    else:
+        qstr = f"select exists(select viewname from pg_views where viewname='{view_name}')"
+    with connection.cursor() as cur:
+        cur.execute(qstr)
+        return cur.fetchone()[0]
+
 
 def create_db_read_only_user(username, using='default'):
     connection = connections[using]

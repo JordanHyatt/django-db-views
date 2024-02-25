@@ -1,8 +1,10 @@
 import time
+from datetime import timedelta
 
 from django.test import TestCase
 from django.contrib.contenttypes.models import ContentType
 from django.db import connections
+from django.utils import timezone
 
 from tests.models import FakeModel, FakeModelFactory
 from db_views.models import DbView
@@ -13,6 +15,7 @@ def get_dbv(view_name='fake_view', defaults = None):
     default_defaults=dict(
         content_type = ContentType.objects.get_for_model(FakeModel),
         get_qs_method_name = 'get_view_qs', materialized=True,
+        ufields = ['uuid']
     )
     for key, val in default_defaults.items():
         if key not in defaults:
@@ -76,4 +79,24 @@ class TestDbView(TestCase):
         self.assertIsNone(dbv.dtg_last_refresh)
         dbv = get_dbv(defaults=dict(materialized=True))
         dbv.create_view()
+        time.sleep(.2)
+        dbv.refresh_mat_view()
+        self.assertAlmostEqual(timezone.now(), dbv.dtg_last_refresh, delta=timedelta(seconds=0.05))
+
+
+    def test_old_view_if_changed(self):
+        pass # TODO write this test
         
+    def test_revoke_privleges(self):
+        pass # TODO write this test
+
+    def test_grant_privleges(self):
+        pass # TODO write this test
+
+    def test_get_fields(self):
+        pass # TODO write this test
+
+    def test_get_get_qs_method_name(self):
+        pass # TODO write this test
+
+
