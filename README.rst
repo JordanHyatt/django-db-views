@@ -8,6 +8,8 @@ django-db-views
 An app for creating and maintaining DB views based on ORM QuerySets
 -------------------------------------------------------------------
 
+This application is expecially useful for when you want to tie analytics tools such as tableau, etc directly into your backend.  You can create the views required directly from the django ORM.
+
 django-db-views is a reusable, installable app for use with a Django project. **Please note** that using this package will result in the direct manipulation of your Django project's database. 
 
 Installation:
@@ -17,17 +19,55 @@ Installation:
 
     pip install django-db-views
 
-2. Add *db_views* to your project setting's INSTALLED_APPS
+2. Add *db_views* to your project setting's INSTALLED_APPS.  You must also have contenttypes framework installed ::
+
+        INSTALLED_APPS = [
+            ...
+            'django.contrib.contenttypes',
+            'db_views',
+        ]
+
 3. Migrate your database ::
 
     python manage.py migrate
 
-Model/API:
-^^^^^^^^^^
 
-You'll probably want to know how to use this so we will add some background here.
-In the meantime the source code itself is fairly explanative.
-Clear, readable code and comments are used throughout.
+Example Usage:
+^^^^^^^^^^^^^^
+Say your project has the following models::
+
+    class Organization(models.Model):
+        name = models.CharField(max_length=250)
+        country_code = models.CharField(max_length=5, null=True)
+
+    class Person(models.Model):
+        org = models.ForeignKey('Organization', null=True, blank=True, on_delete=models.SET_NULL)
+        last_name = models.CharField(max_length=100, null=True)
+        first_name = models.CharField(max_length=100, null=True)
+        middle_name = models.CharField(max_length=100, null=True, blank=True)
+        salary = models.FloatField(null=True)
+
+
+    # You would like to create a DB view from the following person queryset.  Simply create a @classmethod that generates the queryset
+
+    @classmethod
+    def get_person_view_qs(cls):
+        return cls.objects.annotate(
+            org_name = F('org__name')
+        ).values()
+
+Then use the ORM (or create UI) to create a DbView instance::
+
+    content_type = ContentType.objects.get_for_model(Person)
+    dbv = DbView.objects.create(
+        view_name='person_view',  content_type=content_type,
+        get_qs_method_name = 'get_person_view_qs',
+        materialized=False,  db_read_only_users=['user_readonly1'],
+    )
+    dbv.create_view()
+
+At this point the default DB will have a view in called "person_view" that matches the result of the queryset returned from ``get_person_view_qs``.  If you delete the DbView object the view will be dropped from the database.  
+
 
 Contributing:
 ^^^^^^^^^^^^^
