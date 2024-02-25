@@ -17,6 +17,10 @@ if __name__ == "__main__":
 
     from django.test.runner import DiscoverRunner as TestRunner
 
+    print(os.path.dirname(os.path.abspath(__file__)))
+    #sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+
     test_runner = TestRunner()
     failures = test_runner.run_tests(tests)
     sys.exit(bool(failures))

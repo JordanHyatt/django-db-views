@@ -1,12 +1,4 @@
-from pathlib import Path
-import os, sys
-
-
-# Add db_views module to path
-PROJECT_DIR = Path(__file__).resolve().parent.parent
-MODULE_DIR = os.path.join(PROJECT_DIR, 'db_views')
-sys.path.append(MODULE_DIR)
-
+import os
 
 
 INSTALLED_APPS = [

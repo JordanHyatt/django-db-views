@@ -36,6 +36,7 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.7
 sphinxcontrib-serializinghtml==1.1.10
 sqlparse==0.4.4
+tox==4.13.0
 tzdata==2024.1
 urllib3==2.2.1
 wheel==0.42.0
