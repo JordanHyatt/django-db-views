@@ -47,14 +47,13 @@ Say your project has the following models::
         middle_name = models.CharField(max_length=100, null=True, blank=True)
         salary = models.FloatField(null=True)
 
+        @classmethod
+        def get_person_view_qs(cls):
+            return cls.objects.annotate(
+                org_name = F('org__name')
+            ).values()
 
-    # You would like to create a DB view from the following person queryset.  Simply create a @classmethod that generates the queryset
-
-    @classmethod
-    def get_person_view_qs(cls):
-        return cls.objects.annotate(
-            org_name = F('org__name')
-        ).values()
+You would like to create a DB view from the Person model that joins Org info.  Simply create a @classmethod that generates the queryset.  In this case the method is called `` get_person_view_qs ``
 
 Then use the ORM (or create UI) to create a DbView instance::
 
