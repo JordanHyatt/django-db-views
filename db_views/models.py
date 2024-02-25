@@ -13,6 +13,7 @@ from db_views.utils import *
 logger = logging.getLogger()
 
 
+
 def get_db_owner_default():
     from django.conf import settings
     return settings.DATABASES.get('default', {}).get('USER', 'postgres')
@@ -121,8 +122,9 @@ class DbView(models.Model):
             using=self.db_alias, materialized=self.materialized, 
             db_owner=self.db_owner, db_read_only_users=self.db_read_only_users
         )
-        self.dtg_last_refresh = timezone.now()
-        self.dtg_view_created = timezone.now()
+        now = timezone.now()
+        self.dtg_last_refresh = now
+        self.dtg_view_created = now
         if save_instance:
             self.save()
 
@@ -170,11 +172,8 @@ class DbView(models.Model):
         self.get_get_qs_method_name()
         self.get_fields()
         super().save(*args, **kwargs)
-        if call_create_view:
-            transaction.on_commit(self.create_view)
-        else:
-            transaction.on_commit(self.revoke_privleges)
-            transaction.on_commit(self.grant_privleges)
+        transaction.on_commit(self.revoke_privleges)
+        transaction.on_commit(self.grant_privleges)
         transaction.on_commit(self.drop_old_view_if_changed)
 
 
