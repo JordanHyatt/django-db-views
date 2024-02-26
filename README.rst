@@ -10,14 +10,14 @@ An app for creating and maintaining DB views based on ORM QuerySets
 
 This application is especially useful for when you want to tie analytics tools such as tableau, etc directly into your backend without having to do all the SQL.  You can create the views required directly from the django ORM.
 
-django-db-views is a reusable, installable app for use with a Django project. **Please note** that using this package will result in the direct manipulation of your Django project's database. 
+django-qs-views is a reusable, installable app for use with a Django project. **Please note** that using this package will result in the direct manipulation of your Django project's database. 
 
 Installation:
 ^^^^^^^^^^^^^
 
-1. Install django-db-views ::
+1. Install django-qs-views ::
 
-    pip install django-db-views
+    pip install django-qs-views
 
 2. Add *qs_views* to your project setting's INSTALLED_APPS.  You must also have contenttypes framework installed :: 
 

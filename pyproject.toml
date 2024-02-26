@@ -6,15 +6,15 @@ build-backend = 'setuptools.build_meta'
 packages = ['qs_views']
 
 [project]
-name = "django-db-views"
+name = "django-qs-views"
 authors = [
     {name = "Jordan Hyatt", email = "jordan.t.hyatt@gmail.com"},
     {name = "Kevin Geidel", email = "kgeidel@gmail.com"},
 ]
-version = "0.0.1"
+version = "0.0.3"
 requires-python = ">=3.8"
 description = "Automatic creation and managment of QuerySet based DB Views"
-readme = "README.md"
+readme = "README.rst"
 license = { file = "LICENSE" }
 
 
