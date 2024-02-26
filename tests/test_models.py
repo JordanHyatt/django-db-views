@@ -7,7 +7,7 @@ from django.db import connections
 from django.utils import timezone
 
 from tests.models import FakeModel, FakeModelFactory
-from db_views.models import DbView
+from qs_views.models import QsView
 
 
 def get_dbv(view_name='fake_view', defaults = None):
@@ -21,19 +21,19 @@ def get_dbv(view_name='fake_view', defaults = None):
         if key not in defaults:
             defaults[key] = val
 
-    return DbView.objects.update_or_create(
+    return QsView.objects.update_or_create(
         view_name=view_name, defaults=defaults
 
     )[0]
 
-class TestDbView(TestCase):
+class TestQsView(TestCase):
 
     def test_from_db(self):
         dbv = get_dbv()
         # New dbv object should not have _loaded_values
         self.assertIsNone(getattr(dbv, '_loaded_values', None))
         # retreive from db should have _loaded_values
-        dbv = DbView.objects.first()
+        dbv = QsView.objects.first()
         self.assertIsNotNone(getattr(dbv, '_loaded_values', None))
 
     def test_qs(self):
@@ -58,7 +58,7 @@ class TestDbView(TestCase):
 
     def test_get_attr_changed(self):
         get_dbv()
-        dbv = DbView.objects.first()
+        dbv = QsView.objects.first()
         attrs = [('view_name', 'new_view_name'), ('materialized',False)]
         for attr_name, new_val in attrs:
             self.assertFalse(dbv.get_attr_changed(attr_name))

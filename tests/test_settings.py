@@ -8,7 +8,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'db_views',
+    'qs_views',
     'tests',
 ]
 
@@ -16,7 +16,7 @@ INSTALLED_APPS = [
 USE_TZ=True
 
 # Postgres settings used for testing
-name = os.getenv('DB_NAME', 'dbviews')
+name = os.getenv('DB_NAME', 'qsviews')
 user = os.getenv('DB_USER', 'postgres')
 host = os.getenv('DB_HOST', 'localhost')
 password = os.getenv('DB_PASSWORD', 'postgres')

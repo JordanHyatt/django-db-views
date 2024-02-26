@@ -8,7 +8,7 @@ from django.db.utils import OperationalError, ProgrammingError
 from django.contrib.postgres.fields import ArrayField
 from django.db import transaction
 
-from db_views.utils import *
+from qs_views.utils import *
 
 logger = logging.getLogger()
 
@@ -19,8 +19,8 @@ def get_db_owner_default():
     return settings.DATABASES.get('default', {}).get('USER', 'postgres')
 
 
-class DbView(models.Model):
-    ''' Represents a database view created from a django query '''
+class QsView(models.Model):
+    ''' Represents a database view created from a django queryset '''
 
     view_name = models.CharField(max_length=255, unique=True)
     db_alias = models.CharField(max_length=255, default='default')
