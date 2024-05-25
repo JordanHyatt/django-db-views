@@ -38,22 +38,22 @@ Say your project has the following models.
 
 .. code-block :: python 
 
-    class Organization(models.Model):
-        name = models.CharField(max_length=250)
-        country_code = models.CharField(max_length=5, null=True)
+class Organization(models.Model):
+    name = models.CharField(max_length=250)
+    country_code = models.CharField(max_length=5, null=True)
 
-    class Person(models.Model):
-        org = models.ForeignKey('Organization', null=True, blank=True, on_delete=models.SET_NULL)
-        last_name = models.CharField(max_length=100, null=True)
-        first_name = models.CharField(max_length=100, null=True)
-        middle_name = models.CharField(max_length=100, null=True, blank=True)
-        salary = models.FloatField(null=True)
+class Person(models.Model):
+    org = models.ForeignKey('Organization', null=True, blank=True, on_delete=models.SET_NULL)
+    last_name = models.CharField(max_length=100, null=True)
+    first_name = models.CharField(max_length=100, null=True)
+    middle_name = models.CharField(max_length=100, null=True, blank=True)
+    salary = models.FloatField(null=True)
 
-        @classmethod
-        def get_person_view_qs(cls):
-            return cls.objects.annotate(
-                org_name = F('org__name')
-            ).values()
+    @classmethod
+    def get_person_view_qs(cls):
+        return cls.objects.annotate(
+            org_name = F('org__name')
+        ).values()
 
 You would like to create a DB view from the Person model that joins Org info.  Simply create a @classmethod that generates the queryset.  In the example above the method is called `` get_person_view_qs ``
 
@@ -61,13 +61,13 @@ To generate the view use the ORM (or create frontend UI to interact with the mod
 
 .. code-block :: python
     
-    content_type = ContentType.objects.get_for_model(Person)
-    qsv = QsView.objects.create(
-        view_name='person_view',  content_type=content_type,
-        get_qs_method_name = 'get_person_view_qs',
-        materialized=False,  db_read_only_users=['user_readonly1'],
-    )
-    qsv.create_view()
+content_type = ContentType.objects.get_for_model(Person)
+qsv = QsView.objects.create(
+    view_name='person_view',  content_type=content_type,
+    get_qs_method_name = 'get_person_view_qs',
+    materialized=False,  db_read_only_users=['user_readonly1'],
+)
+qsv.create_view()
 
 At this point the default DB will have a view in called "person_view" that matches the result of the queryset returned from ``get_person_view_qs``.  If you delete the QsView instance the view will be dropped from the database.  
 
