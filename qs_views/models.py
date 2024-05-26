@@ -58,7 +58,9 @@ class QsView(models.Model):
     @property
     def get_qs_method_exists(self):
         """ Property returns True if the get_qs_method exists on the model_class """
-        return hasattr(self.content_type.model_class(), self.get_qs_method_name)
+        m1 = hasattr(self.content_type.model_class(), self.get_qs_method_name)
+        m2 = hasattr(self.content_type.model_class()._default_manager, self.get_qs_method_name)
+        return m1 or m2
 
     @property
     def db_connection(self):
