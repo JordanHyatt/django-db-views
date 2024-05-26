@@ -49,10 +49,16 @@ class QsView(models.Model):
         )
         return instance
 
+
+    def get_get_qs_method(self):
+        m1 = getattr(self.content_type.model_class(), self.get_qs_method_name, None)
+        m2 = getattr(self.content_type.model_class()._default_manager, self.get_qs_method_name, None)
+        return m1 or m2
+
     @property
     def qs(self):
         if self.get_qs_method_exists:
-            return getattr(self.content_type.model_class(), self.get_qs_method_name).__call__()
+            return self.get_get_qs_method().__call__()
         return None
 
     @property
@@ -73,7 +79,7 @@ class QsView(models.Model):
     @property
     def materialized_changed(self):
         return self.get_attr_changed(attr_name='materialized')
-
+    
     def get_attr_changed(self, attr_name):
         orig = getattr(self, '_loaded_values', {}).get(attr_name)
         return orig != getattr(self, attr_name)

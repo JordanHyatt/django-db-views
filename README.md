@@ -48,7 +48,7 @@ class Person(models.Model):
         ).values()
 ```
 You would like to create a DB view from the Person model that joins Org info.  Simply create a
- ```@classmethod``` that generates the queryset.  In the example above the method is called `` get_person_view_qs ``.
+ ```@classmethod``` that generates the queryset.  In the example above the method is called `` get_person_view_qs ``.  The method could also live on a custom manager/queryset instead of the model itself.
 
 To generate the view use the ORM (or create frontend UI to interact with the model) to create a QsView instance and call the ``create_view`` method
 
