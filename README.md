@@ -53,6 +53,8 @@ You would like to create a DB view from the Person model that joins Org info.  S
 To generate the view use the ORM (or create frontend UI to interact with the model) to create a QsView instance and call the ``create_view`` method
 
 ```python
+from qs_views.models import QsView
+
 content_type = ContentType.objects.get_for_model(Person)
 qsv = QsView.objects.create(
     view_name='person_view',  content_type=content_type,
@@ -62,3 +64,36 @@ qsv = QsView.objects.create(
 qsv.create_view()
 ```
 At this point the default DB will have a view in called "person_view" that matches the result of the queryset returned from ``get_person_view_qs``.  If you delete the QsView instance the view will be dropped from the database.  
+
+## Example Usage (Unmanged Views):
+If you do not want to install the app and create QsView instances to manage views, you can create "unmanged" views using the utils.py module.
+
+```python
+from qs_views.utils import create_view_from_qs
+from myapp.models import Person
+
+create_view_from_qs(
+    qs=Person.get_person_view_qs(), 
+    view_name='person_view'
+)
+```
+The above snippet will create a non-materialized view named "person_view" that will match the queryset returned by Person.get_person_view_qs().  That view can delted using the drop_view util:
+
+```python
+from qs_views.utils import drop_view
+
+drop_view(view_name='person_view')
+```
+
+
+## Contributing
+Developers will need to install packages from ```requirements.txt```.  Tests are run on a database with the following defaults that can be overwritted with env vars:
+```python
+name = os.getenv('DB_NAME', 'qsviews')
+user = os.getenv('DB_USER', 'postgres')
+host = os.getenv('DB_HOST', 'localhost')
+password = os.getenv('DB_PASSWORD', 'postgres')
+port = os.getenv('DB_PORT', '5432')
+```
+
+Tests are run with the command ```python runtests.py``` (or ```tox run```) from the root directory
